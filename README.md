@@ -27,9 +27,9 @@ Plataforma integral de gestión de ventas, inventario y reportes financieros par
   git clone https://github.com/aydee98/techsolutions-platform.git
   cd techsolutions-platform
 
- ###Instalar Dependencias
- ###npm install
- ###Ejecutar en Modo Desarrollo
- ###ng serve
+  ###Instalar Dependencias
+  npm install
+  Ejecutar en Modo Desarrollo
+  ng serve
   
 
