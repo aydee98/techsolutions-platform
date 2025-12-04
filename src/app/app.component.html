@@ -1,0 +1,98 @@
+<div class="app-container">
+  <!-- Header superior -->
+  <header class="top-header">
+    <div class="header-left">
+      <h1 class="app-title">{{ title }}</h1>
+    </div>
+    <div class="header-right">
+      <div class="welcome-message">
+        Bienvenido, <span class="username">{{ currentUser.name }}</span>
+        <span class="user-role">({{ currentUser.role }})</span>
+      </div>
+      <button class="logout-btn" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <!-- Barra de navegación -->
+  <nav class="nav-bar">
+    <ul class="nav-menu">
+      @for (item of getVisibleMenuItems(); track item.id) {
+        <li 
+          [class]="getNavItemClass(item.id)" 
+          (click)="setActiveTab(item.id)"
+          [title]="item.label"
+        >
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <h1 class="page-title">{{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }}</h1>
+
+    <!-- Solo mostrar sección de bienvenida en dashboard -->
+    @if (activeTab === 'dashboard') {
+      <section class="dashboard-welcome">
+        <h2 class="welcome-title">Bienvenido a la Plataforma de Gestión Empresarial</h2>
+        <p class="welcome-subtitle">Gestiona todas las operaciones de tu empresa desde un solo lugar</p>
+        
+        <div class="user-info-grid">
+          <div class="info-item">
+            <div class="info-label">Usuario</div>
+            <div class="info-value">{{ currentUser.email }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Rol</div>
+            <div class="info-value">{{ currentUser.role }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Permisos</div>
+            <div class="info-value permissions">
+              @for (permission of currentUser.permissions; track permission) {
+                <span class="permission-tag">{{ permission }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sección de características -->
+      <section class="features-section">
+        <h2 class="section-title">Módulos Principales</h2>
+        
+        <div class="features-grid">
+          @for (feature of getVisibleFeatures(); track feature.id) {
+            <div class="feature-card" (click)="onFeatureClick(feature.id)">
+              <div class="card-header">
+                <div class="card-icon" [style.background-color]="feature.color">
+                  {{ feature.icon }}
+                </div>
+                <h3 class="card-title">{{ feature.title }}</h3>
+              </div>
+              <p class="card-description">
+                {{ feature.description }}
+              </p>
+              <div class="card-action">
+                <button 
+                  class="action-btn" 
+                  (click)="onFeatureClick(feature.id); $event.stopPropagation()"
+                  [style.background-color]="feature.color"
+                >
+                  Ir a {{ feature.title }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Área para componentes dinámicos -->
+    <div class="router-outlet-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

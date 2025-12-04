@@ -1,0 +1,445 @@
+<div class="payments-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>💳 Gestión de Pagos</h1>
+    <p class="subtitle">Patrón Adapter - Integración múltiples pasarelas de pago</p>
+  </div>
+
+  <!-- Panel de Adaptadores (Adapter Pattern) -->
+  <div class="adapter-panel">
+    <h3>🔄 Panel de Adaptadores</h3>
+    <div class="gateway-controls">
+      <div class="gateway-list">
+        <div *ngFor="let gateway of availableGateways" 
+             class="gateway-item" 
+             [class.disabled]="!gatewaySettings[gateway.id]"
+             [style.borderColor]="gateway.color">
+          <div class="gateway-header" (click)="toggleGateway(gateway.id)">
+            <span class="gateway-icon">{{ gateway.icon }}</span>
+            <span class="gateway-name">{{ gateway.name }}</span>
+            <span class="gateway-status">
+              {{ gatewaySettings[gateway.id] ? '✅ Habilitado' : '❌ Deshabilitado' }}
+            </span>
+          </div>
+          <div class="gateway-info">
+            <small>ID: {{ gateway.id }}</small>
+            <button class="btn-test" 
+                    (click)="testGateway(gateway.id)"
+                    [disabled]="!gatewaySettings[gateway.id]">
+              🔍 Probar Conexión
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="adapter-info">
+        <h4>🎯 Patrón Adapter Implementado</h4>
+        <p><strong>Funcionalidad:</strong> Unificación de múltiples pasarelas de pago</p>
+        <ul>
+          <li><strong>PayPal:</strong> Adaptador para API REST</li>
+          <li><strong>Yape:</strong> Adaptador para API QR</li>
+          <li><strong>Plin:</strong> Adaptador para API móvil</li>
+          <li><strong>Tarjeta:</strong> Adaptador para procesador local</li>
+        </ul>
+        <p class="adapter-benefit">
+          ✅ Interfaz común para diferentes APIs, sin modificar código cliente
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-icon">💰</div>
+      <div class="stat-info">
+        <h3>{{ stats.totalPayments }}</h3>
+        <p>Total Pagos</p>
+      </div>
+    </div>
+    
+    <div class="stat-card completed">
+      <div class="stat-icon">✅</div>
+      <div class="stat-info">
+        <h3>{{ stats.completed }}</h3>
+        <p>Completados</p>
+      </div>
+    </div>
+    
+    <div class="stat-card pending">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-info">
+        <h3>{{ stats.pending }}</h3>
+        <p>Pendientes</p>
+      </div>
+    </div>
+    
+    <div class="stat-card amount">
+      <div class="stat-icon">📈</div>
+      <div class="stat-info">
+        <h3>{{ formatAmount(stats.totalAmount, 'USD') }}</h3>
+        <p>Monto Total</p>
+      </div>
+    </div>
+    
+    <div class="stat-card rate">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-info">
+        <h3>{{ stats.successRate }}%</h3>
+        <p>Tasa de Éxito</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <h3>🔍 Filtros de Búsqueda</h3>
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label for="search">Buscar:</label>
+        <input 
+          type="text" 
+          id="search"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="ID, transacción o pasarela..."
+          class="form-control"
+        >
+      </div>
+      
+      <div class="filter-group">
+        <label for="gateway">Pasarela:</label>
+        <select 
+          id="gateway"
+          [(ngModel)]="gatewayFilter"
+          (ngModelChange)="applyFilters()"
+          class="form-control"
+        >
+          <option value="">Todas las pasarelas</option>
+          <option *ngFor="let gateway of availableGateways" 
+                  [value]="gateway.id"
+                  [disabled]="!gatewaySettings[gateway.id]">
+            {{ gateway.name }} {{ !gatewaySettings[gateway.id] ? '(Deshabilitado)' : '' }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="status">Estado:</label>
+        <select 
+          id="status"
+          [(ngModel)]="statusFilter"
+          (ngModelChange)="applyFilters()"
+          class="form-control"
+        >
+          <option value="">Todos los estados</option>
+          <option value="Completed">Completado</option>
+          <option value="Pending">Pendiente</option>
+          <option value="Failed">Fallido</option>
+          <option value="Refunded">Reembolsado</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>Fecha:</label>
+        <div class="date-range">
+          <input 
+            type="date" 
+            [(ngModel)]="dateRange.start"
+            (ngModelChange)="applyFilters()"
+            class="form-control"
+            placeholder="Desde"
+          >
+          <span>a</span>
+          <input 
+            type="date" 
+            [(ngModel)]="dateRange.end"
+            (ngModelChange)="applyFilters()"
+            class="form-control"
+            placeholder="Hasta"
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Pagos -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3>📋 Historial de Pagos ({{ getFilteredPayments().length }})</h3>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="payments-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Orden</th>
+            <th>Pasarela</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Transacción</th>
+            <th>Fecha</th>
+            <th class="actions-header">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of getFilteredPayments()" 
+              [class]="getStatusClass(payment.status)">
+            <td class="payment-id">#{{ payment.id }}</td>
+            <td>
+              <strong>Orden #{{ payment.orderId }}</strong>
+              <div class="payment-info">
+                <small>Ref: {{ payment.transactionId?.substring(0, 15) || '' }}...</small>
+              </div>
+            </td>
+            <td>
+              <div class="gateway-display">
+                <span class="gateway-icon-small" 
+                      [style.backgroundColor]="getGatewayColor(payment.gateway)">
+                  {{ getGatewayIcon(payment.gateway) }}
+                </span>
+                <span class="gateway-name-small">{{ getGatewayName(payment.gateway) }}</span>
+              </div>
+            </td>
+            <td class="amount-cell">
+              <div class="amount-display">
+                {{ formatAmount(payment.amount, payment.currency) }}
+              </div>
+              <div class="currency-info">
+                <small>{{ payment.currency }}</small>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [class]="getStatusClass(payment.status)">
+                {{ getStatusIcon(payment.status) }} {{ payment.status }}
+              </span>
+            </td>
+            <td class="transaction-cell">
+              <code class="transaction-id">{{ payment.transactionId }}</code>
+              <button class="btn-view" (click)="viewTransactionDetails(payment)">
+                👁️ Ver detalles
+              </button>
+            </td>
+            <td class="date-cell">
+              {{ payment.date | date:'dd/MM/yy' }}
+              <small>{{ payment.date | date:'HH:mm' }}</small>
+            </td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button *ngIf="payment.status === 'Completed'" 
+                        class="btn-action refund"
+                        (click)="refundPayment(payment.id)"
+                        title="Reembolsar pago">
+                  💰 Reembolsar
+                </button>
+                <button *ngIf="payment.status === 'Failed'" 
+                        class="btn-action retry"
+                        (click)="retryPayment(payment.id)"
+                        title="Reintentar pago">
+                  🔄 Reintentar
+                </button>
+                <button class="btn-action details"
+                        (click)="viewTransactionDetails(payment)"
+                        title="Ver detalles">
+                  📊 Detalles
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <tr *ngIf="getFilteredPayments().length === 0">
+            <td colspan="8" class="text-center no-data">
+              No se encontraron pagos con los filtros aplicados
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Procesar Nuevo Pago -->
+  <div class="process-payment-card">
+    <h3>🔄 Procesar Nuevo Pago</h3>
+    
+    <div class="payment-form">
+      <!-- Selección de Orden -->
+      <div class="form-section">
+        <h4>📦 Seleccionar Orden</h4>
+        <div class="orders-grid">
+          <div *ngFor="let order of demoOrders" 
+               class="order-card"
+               [class.selected]="newPayment.orderId === order.id"
+               (click)="selectOrder(order)">
+            <div class="order-header">
+              <span class="order-id">#{{ order.id }}</span>
+              <span class="order-customer">{{ order.customer }}</span>
+            </div>
+            <div class="order-amount">
+              {{ formatAmount(order.amount, 'USD') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuración del Pago -->
+      <div class="form-section">
+        <h4>⚙️ Configuración del Pago</h4>
+        
+        <div class="form-group">
+          <label for="amount">Monto a Pagar *</label>
+          <div class="amount-input">
+            <span class="currency-symbol">{{ getCurrencySymbol(newPayment.currency || 'USD') }}</span>
+            <input 
+              type="number" 
+              id="amount"
+              [(ngModel)]="newPayment.amount"
+              class="form-control"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              required
+            >
+            <select 
+              [(ngModel)]="newPayment.currency"
+              class="currency-select"
+            >
+              <option value="USD">USD</option>
+              <option value="PEN">PEN</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Seleccionar Pasarela</label>
+          <div class="gateways-grid">
+            <div *ngFor="let gateway of availableGateways" 
+                 class="gateway-option"
+                 [class.disabled]="!gatewaySettings[gateway.id]"
+                 [class.selected]="newPayment.gateway === gateway.id"
+                 (click)="gatewaySettings[gateway.id] && (newPayment.gateway = gateway.id)">
+              <div class="gateway-option-icon" [style.backgroundColor]="gateway.color">
+                {{ gateway.icon }}
+              </div>
+              <div class="gateway-option-info">
+                <strong>{{ gateway.name }}</strong>
+                <small>{{ gatewaySettings[gateway.id] ? 'Disponible' : 'Deshabilitado' }}</small>
+              </div>
+              <div class="gateway-option-check">
+                {{ newPayment.gateway === gateway.id ? '✅' : '' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen y Procesar -->
+      <div class="form-section summary">
+        <h4>📋 Resumen del Pago</h4>
+        
+        <div class="summary-details">
+          <div class="summary-row">
+            <span>Orden:</span>
+            <span>#{{ newPayment.orderId || 'No seleccionada' }}</span>
+          </div>
+          <div class="summary-row">
+            <span>Monto:</span>
+            <span>{{ formatAmount(newPayment.amount || 0, newPayment.currency || 'USD') }}</span>
+          </div>
+          <div class="summary-row">
+            <span>Pasarela:</span>
+            <span>{{ getGatewayName(newPayment.gateway || '') }}</span>
+          </div>
+          <div class="summary-row">
+            <span>Comisión:</span>
+            <span>{{ getFormattedProcessingFee() }}</span>
+          </div>
+          <div class="summary-row total">
+            <strong>Neto a Recibir:</strong>
+            <strong>{{ getFormattedNetAmount() }}</strong>
+          </div>
+        </div>
+
+        <button class="btn-process"
+                (click)="processPayment()"
+                [disabled]="processingPayment || !newPayment.orderId || !newPayment.amount"
+                [class.processing]="processingPayment">
+          <span *ngIf="!processingPayment">
+            💳 Procesar Pago via {{ getGatewayName(newPayment.gateway || '') }}
+          </span>
+          <span *ngIf="processingPayment">
+            <span class="spinner"></span>
+            Procesando con {{ getGatewayName(newPayment.gateway || '') }}...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalles de Transacción (Modal) -->
+  <div *ngIf="selectedPayment && transactionDetails" class="transaction-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📊 Detalles de Transacción</h3>
+        <button class="btn-close" (click)="closeModal()">
+          ✕
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="transaction-info">
+          <div class="info-row">
+            <span class="info-label">ID de Transacción:</span>
+            <span class="info-value">{{ transactionDetails.transactionId }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Pasarela:</span>
+            <span class="info-value gateway-badge" 
+                  [style.backgroundColor]="getGatewayColor(transactionDetails.gateway)">
+              {{ getGatewayIcon(transactionDetails.gateway) }} 
+              {{ getGatewayName(transactionDetails.gateway) }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Estado:</span>
+            <span class="info-value status-badge" [class]="getStatusClass(transactionDetails.status)">
+              {{ getStatusIcon(transactionDetails.status) }} {{ transactionDetails.status }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Fecha y Hora:</span>
+            <span class="info-value">{{ transactionDetails.date }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Orden:</span>
+            <span class="info-value">#{{ transactionDetails.orderId }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Monto Bruto:</span>
+            <span class="info-value amount">{{ formatAmount(transactionDetails.amount, selectedPayment.currency) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Comisión:</span>
+            <span class="info-value fee">-{{ formatAmount(transactionDetails.processingFee, selectedPayment.currency) }}</span>
+          </div>
+          <div class="info-row total">
+            <span class="info-label">Monto Neto:</span>
+            <span class="info-value net-amount">{{ formatAmount(transactionDetails.netAmount, selectedPayment.currency) }}</span>
+          </div>
+        </div>
+        
+        <div class="transaction-actions">
+          <button *ngIf="selectedPayment.status === 'Completed'" 
+                  class="btn-modal refund"
+                  (click)="refundPayment(selectedPayment.id); closeModal()">
+            💰 Solicitar Reembolso
+          </button>
+          <button class="btn-modal close"
+                  (click)="closeModal()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

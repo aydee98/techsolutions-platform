@@ -1,0 +1,27 @@
+<div class="products-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>📦 Catálogo de Productos</h1>
+    <p class="subtitle">Patrón Iterator - Navegación eficiente de colecciones</p>
+  </div>
+
+  <!-- Panel de Iterator Pattern -->
+  <div class="iterator-panel">
+    <h3>🔄 Panel de Iterator Pattern</h3>
+    <div class="iterator-controls">
+      <div class="navigation-mode">
+        <label>Modo de Navegación:</label>
+        <div class="mode-buttons">
+          <button [class.active]="navigationMode === 'pagination'"
+                  (click)="changeNavigationMode('pagination')">
+            📄 Paginación Tradicional
+          </button>
+          <button [class.active]="navigationMode === 'iterator'"
+                  (click)="changeNavigationMode('iterator')">
+            🔄 Iterator Pattern
+          </button>
+        </div>
+      </div>
+      
+      <div class="iterator-info">
+        <div *ngIf="navigationMode === 'iterator'" class="iterator-stats">

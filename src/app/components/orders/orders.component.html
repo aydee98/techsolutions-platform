@@ -1,0 +1,446 @@
+<div class="orders-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>📦 Gestión de Pedidos</h1>
+    <p class="subtitle">Patrones Command y Memento - Gestión con historial y deshacer</p>
+  </div>
+
+  <!-- Control de Historial (Command Pattern) -->
+  <div class="history-control">
+    <h3>🔄 Control de Historial (Command Pattern)</h3>
+    <div class="history-buttons">
+      <button class="btn btn-warning" (click)="undoLastAction()" title="Deshacer última acción">
+        ↩️ Deshacer
+      </button>
+      <button class="btn btn-info" (click)="redoLastAction()" title="Rehacer última acción">
+        ↪️ Rehacer
+      </button>
+      <span class="history-info">
+        Últimas acciones registradas en historial de comandos
+      </span>
+    </div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-icon">📊</div>
+      <div class="stat-info">
+        <h3>{{ stats.totalOrders }}</h3>
+        <p>Total Pedidos</p>
+      </div>
+    </div>
+    
+    <div class="stat-card pending">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-info">
+        <h3>{{ stats.pending }}</h3>
+        <p>Pendientes</p>
+      </div>
+    </div>
+    
+    <div class="stat-card processing">
+      <div class="stat-icon">⚙️</div>
+      <div class="stat-info">
+        <h3>{{ stats.processing }}</h3>
+        <p>Procesando</p>
+      </div>
+    </div>
+    
+    <div class="stat-card completed">
+      <div class="stat-icon">✅</div>
+      <div class="stat-info">
+        <h3>{{ stats.completed }}</h3>
+        <p>Completados</p>
+      </div>
+    </div>
+    
+    <div class="stat-card revenue">
+      <div class="stat-icon">💰</div>
+      <div class="stat-info">
+        <h3>S/ {{ stats.totalRevenue | number:'1.2-2' }}</h3>
+        <p>Ingresos Totales</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <h3>🔍 Filtros de Búsqueda</h3>
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label for="search">Buscar:</label>
+        <input 
+          type="text" 
+          id="search"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="Cliente, email o ID..."
+          class="form-control"
+        >
+      </div>
+      
+      <div class="filter-group">
+        <label for="status">Estado:</label>
+        <select 
+          id="status"
+          [(ngModel)]="statusFilter"
+          (ngModelChange)="applyFilters()"
+          class="form-control"
+        >
+          <option value="">Todos los estados</option>
+          <option value="Pending">Pendiente</option>
+          <option value="Processing">Procesando</option>
+          <option value="Completed">Completado</option>
+          <option value="Cancelled">Cancelado</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>Fecha:</label>
+        <div class="date-range">
+          <input 
+            type="date" 
+            [(ngModel)]="dateRange.start"
+            (ngModelChange)="applyFilters()"
+            class="form-control"
+            placeholder="Desde"
+          >
+          <span>a</span>
+          <input 
+            type="date" 
+            [(ngModel)]="dateRange.end"
+            (ngModelChange)="applyFilters()"
+            class="form-control"
+            placeholder="Hasta"
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Pedidos -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3>📋 Lista de Pedidos ({{ filteredOrders.length }})</h3>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Productos</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Pago</th>
+            <th class="actions-header">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of filteredOrders" [class]="getStatusClass(order.status)">
+            <td class="order-id">#{{ order.id }}</td>
+            <td>
+              <strong>{{ order.customerName }}</strong>
+              <div class="customer-email">{{ order.customerEmail }}</div>
+              <small *ngIf="order.shippingAddress">{{ order.shippingAddress }}</small>
+            </td>
+            <td class="date-cell">
+              {{ order.createdAt | date:'dd/MM/yy' }}
+              <small>{{ order.createdAt | date:'HH:mm' }}</small>
+            </td>
+            <td>
+              <div class="products-list">
+                <div *ngFor="let product of order.products" class="product-item">
+                  <span class="product-quantity">{{ product.quantity }}x</span>
+                  <span class="product-name">{{ product.productName }}</span>
+                  <span class="product-price">S/ {{ product.total | number:'1.2-2' }}</span>
+                </div>
+              </div>
+              <div class="products-summary">
+                {{ getTotalProducts(order) }} productos
+              </div>
+            </td>
+            <td class="amount-cell">
+              <div class="amount-total">S/ {{ order.total | number:'1.2-2' }}</div>
+              <div class="amount-breakdown">
+                <small>Sub: S/ {{ order.subtotal | number:'1.2-2' }}</small>
+                <small>Desc: -S/ {{ order.discount | number:'1.2-2' }}</small>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [class]="getStatusClass(order.status)">
+                {{ getStatusName(order.status) }}
+              </span>
+              <div class="status-actions">
+                <button *ngIf="order.status === 'Pending'" 
+                        class="btn-sm btn-success"
+                        (click)="updateOrderStatus(order.id, 'Processing')">
+                  Procesar
+                </button>
+                <button *ngIf="order.status === 'Processing'" 
+                        class="btn-sm btn-primary"
+                        (click)="updateOrderStatus(order.id, 'Completed')">
+                  Completar
+                </button>
+                <button *ngIf="order.status !== 'Cancelled'" 
+                        class="btn-sm btn-danger"
+                        (click)="cancelOrder(order.id)">
+                  Cancelar
+                </button>
+              </div>
+            </td>
+            <td>
+              <span class="payment-badge" [class]="getPaymentStatusClass(order.paymentStatus || 'Pending')">
+                {{ order.paymentStatus || 'Pending' }}
+              </span>
+              <div *ngIf="order.paymentMethod" class="payment-method">
+                <small>Via: {{ order.paymentMethod }}</small>
+              </div>
+            </td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button class="btn-sm btn-info" 
+                        (click)="applyDiscountToOrder(order.id)"
+                        title="Aplicar 10% de descuento">
+                  💰 Descuento
+                </button>
+                <button class="btn-sm btn-warning" 
+                        (click)="viewOrderHistory(order.id)"
+                        title="Ver historial de estados (Memento)">
+                  📜 Historial
+                </button>
+                <button *ngIf="order.status !== 'Cancelled'"
+                        class="btn-sm btn-secondary"
+                        (click)="updateOrderStatus(order.id, 'Pending')"
+                        title="Revertir a pendiente">
+                  ↩️ Revertir
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <tr *ngIf="filteredOrders.length === 0">
+            <td colspan="8" class="text-center no-data">
+              No se encontraron pedidos con los filtros aplicados
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Crear Nuevo Pedido -->
+  <div class="create-order-card">
+    <h3>🛒 Crear Nuevo Pedido</h3>
+    
+    <div class="create-order-grid">
+      <!-- Información del Cliente -->
+      <div class="customer-section">
+        <h4>👤 Información del Cliente</h4>
+        <div class="form-group">
+          <label for="customerName">Nombre *</label>
+          <input 
+            type="text" 
+            id="customerName"
+            [(ngModel)]="newOrder.customerName"
+            class="form-control"
+            placeholder="Nombre completo del cliente"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="customerEmail">Email *</label>
+          <input 
+            type="email" 
+            id="customerEmail"
+            [(ngModel)]="newOrder.customerEmail"
+            class="form-control"
+            placeholder="email@cliente.com"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="shippingAddress">Dirección de Envío</label>
+          <textarea 
+            id="shippingAddress"
+            [(ngModel)]="newOrder.shippingAddress"
+            class="form-control"
+            rows="2"
+            placeholder="Dirección completa para envío"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Agregar Productos -->
+      <div class="products-section">
+        <h4>📦 Productos del Pedido</h4>
+        
+        <div class="add-product-form">
+          <div class="form-group">
+            <label for="productSelect">Seleccionar Producto</label>
+            <select 
+              id="productSelect"
+              [(ngModel)]="selectedProduct"
+              class="form-control"
+            >
+              <option [ngValue]="null">Selecciona un producto</option>
+              <option *ngFor="let product of products" [ngValue]="product">
+                {{ product.name }} - S/ {{ product.price | number:'1.2-2' }} (Stock: {{ product.stock }})
+              </option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="quantity">Cantidad</label>
+            <input 
+              type="number" 
+              id="quantity"
+              [(ngModel)]="productQuantity"
+              class="form-control"
+              min="1"
+              [max]="selectedProduct?.stock || 1"
+            >
+            <small *ngIf="selectedProduct" class="stock-info">
+              Stock disponible: {{ selectedProduct.stock }}
+            </small>
+          </div>
+          
+          <button class="btn btn-primary" 
+                  (click)="addProductToOrder()"
+                  [disabled]="!selectedProduct || productQuantity <= 0">
+            + Agregar al Pedido
+          </button>
+        </div>
+
+        <!-- Productos Agregados -->
+        <div *ngIf="newOrder.products && newOrder.products.length > 0" class="added-products">
+          <h5>Productos en el Pedido:</h5>
+          <div class="product-list">
+            <div *ngFor="let item of newOrder.products; let i = index" class="product-item-added">
+              <div class="product-info">
+                <strong>{{ item.productName }}</strong>
+                <div class="product-details">
+                  {{ item.quantity }} x S/ {{ item.unitPrice | number:'1.2-2' }} = 
+                  <strong>S/ {{ item.total | number:'1.2-2' }}</strong>
+                </div>
+              </div>
+              <button class="btn-sm btn-danger" (click)="removeProductFromOrder(i)">
+                ❌
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estrategia de Precios -->
+      <div class="pricing-section">
+        <h4>🎯 Estrategia de Precios (Strategy Pattern)</h4>
+        
+        <div class="form-group">
+          <label for="strategy">Estrategia de Precio:</label>
+          <select 
+            id="strategy"
+            [(ngModel)]="selectedStrategy"
+            (ngModelChange)="onStrategyChange()"
+            class="form-control"
+          >
+            <option *ngFor="let strategy of pricingStrategies" [value]="strategy.id">
+              {{ strategy.name }}
+            </option>
+          </select>
+        </div>
+
+        <div *ngIf="selectedStrategy === 'discount'" class="form-group">
+          <label for="discountPercentage">Porcentaje de Descuento (%)</label>
+          <input 
+            type="range" 
+            id="discountPercentage"
+            [(ngModel)]="discountPercentage"
+            (ngModelChange)="onStrategyChange()"
+            class="form-control"
+            min="0"
+            max="50"
+            step="5"
+          >
+          <div class="discount-display">
+            {{ discountPercentage }}% de descuento
+            <button type="button" class="btn-sm btn-info" (click)="calculateOrderTotals()">
+              Recalcular
+            </button>
+          </div>
+        </div>
+
+        <!-- Resumen del Pedido -->
+        <div class="order-summary">
+          <h5>📋 Resumen del Pedido</h5>
+          <div class="summary-row">
+            <span>Subtotal:</span>
+            <span>S/ {{ newOrder.subtotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row">
+            <span>Descuento:</span>
+            <span>-S/ {{ newOrder.discount | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row total">
+            <strong>Total:</strong>
+            <strong>S/ {{ newOrder.total | number:'1.2-2' }}</strong>
+          </div>
+          
+          <button class="btn btn-success create-order-btn"
+                  (click)="createOrder()"
+                  [disabled]="!newOrder.customerName || !newOrder.customerEmail || !newOrder.products || newOrder.products.length === 0">
+            🚀 Crear Pedido
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información de Patrones Implementados -->
+  <div class="patterns-info">
+    <div class="pattern-card command">
+      <h4>🎮 Patrón Command</h4>
+      <p><strong>Implementado en:</strong> Gestión de estados de pedidos</p>
+      <ul>
+        <li>Crear pedido (comando ejecutable)</li>
+        <li>Cambiar estado (ejecutar/deshacer)</li>
+        <li>Aplicar descuento (acción reversible)</li>
+        <li>Cancelar pedido (historial completo)</li>
+      </ul>
+      <p class="pattern-benefit">
+        ✅ Cada acción se encapsula como objeto independiente con métodos execute() y undo()
+      </p>
+    </div>
+    
+    <div class="pattern-card memento">
+      <h4>💾 Patrón Memento</h4>
+      <p><strong>Implementado en:</strong> Historial de estados de pedidos</p>
+      <ul>
+        <li>Guardar estado anterior (memento)</li>
+        <li>Restaurar estado previo (caretaker)</li>
+        <li>Visualizar historial completo</li>
+        <li>Recuperación ante errores</li>
+      </ul>
+      <p class="pattern-benefit">
+        ✅ Permite revertir pedidos a estados anteriores mediante restauración de momentos
+      </p>
+    </div>
+    
+    <div class="pattern-card strategy">
+      <h4>🎯 Patrón Strategy</h4>
+      <p><strong>Implementado en:</strong> Cálculo de precios</p>
+      <ul>
+        <li>Precio estándar (sin modificaciones)</li>
+        <li>Descuento porcentual (configurable)</li>
+        <li>Precio dinámico (demanda/temporada)</li>
+        <li>Intercambio en tiempo de ejecución</li>
+      </ul>
+      <p class="pattern-benefit">
+        ✅ Soporta distintas estrategias de precios intercambiables
+      </p>
+    </div>
+  </div>
+</div>

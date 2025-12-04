@@ -1,0 +1,290 @@
+<div class="inventory-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>🏭 Gestión de Inventario</h1>
+    <p class="subtitle">Administra el stock de productos y recibe alertas automáticas</p>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-icon">📦</div>
+      <div class="stat-info">
+        <h3>{{ stats.totalProducts }}</h3>
+        <p>Productos Totales</p>
+      </div>
+    </div>
+    
+    <div class="stat-card low-stock">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-info">
+        <h3>{{ stats.lowStockCount }}</h3>
+        <p>Stock Bajo</p>
+      </div>
+    </div>
+    
+    <div class="stat-card out-of-stock">
+      <div class="stat-icon">❌</div>
+      <div class="stat-info">
+        <h3>{{ stats.outOfStockCount }}</h3>
+        <p>Agotados</p>
+      </div>
+    </div>
+    
+    <div class="stat-card value">
+      <div class="stat-icon">💰</div>
+      <div class="stat-info">
+        <h3>S/ {{ stats.totalValue | number:'1.2-2' }}</h3>
+        <p>Valor Total</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <h3>🔍 Filtros</h3>
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label for="search">Buscar producto:</label>
+        <input 
+          type="text" 
+          id="search"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+          placeholder="Nombre o descripción..."
+          class="form-control"
+        >
+      </div>
+      
+      <div class="filter-group">
+        <label for="category">Categoría:</label>
+        <select 
+          id="category"
+          [(ngModel)]="categoryFilter"
+          (ngModelChange)="applyFilters()"
+          class="form-control"
+        >
+          <option value="">Todas las categorías</option>
+          <option *ngFor="let category of getCategories()" [value]="category">
+            {{ category }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <div class="form-check">
+          <input 
+            type="checkbox" 
+            id="lowStock"
+            [(ngModel)]="lowStockFilter"
+            (ngModelChange)="applyFilters()"
+            class="form-check-input"
+          >
+          <label for="lowStock" class="form-check-label">
+            Mostrar solo stock bajo (≤ mínimo)
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Productos -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3>📋 Lista de Productos</h3>
+      <button class="btn btn-primary" (click)="isEditing = true; selectedProduct = null">
+        + Agregar Producto
+      </button>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="inventory-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th>Precio (S/)</th>
+            <th>Stock</th>
+            <th>Mínimo</th>
+            <th>Estado</th>
+            <th>Valor</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of filteredProducts" 
+              [class]="getStockStatusClass(product.stock, product.minStock)">
+            <td>{{ product.id }}</td>
+            <td>
+              <strong>{{ product.name }}</strong>
+              <small class="description">{{ product.description }}</small>
+            </td>
+            <td>{{ product.category }}</td>
+            <td class="price">{{ product.price | number:'1.2-2' }}</td>
+            <td>
+              <div class="stock-control">
+                <button class="btn-sm btn-outline-secondary" 
+                        (click)="updateStock(product.id, product.stock - 1)"
+                        [disabled]="product.stock <= 0">
+                  -
+                </button>
+                <span class="stock-value">{{ product.stock }}</span>
+                <button class="btn-sm btn-outline-secondary" 
+                        (click)="updateStock(product.id, product.stock + 1)">
+                  +
+                </button>
+              </div>
+            </td>
+            <td>{{ product.minStock }}</td>
+            <td>
+              <span class="status-badge" [class]="getStockStatusClass(product.stock, product.minStock)">
+                {{ getStockStatus(product.stock, product.minStock) }}
+              </span>
+            </td>
+            <td class="value">S/ {{ (product.price * product.stock) | number:'1.2-2' }}</td>
+            <td class="actions">
+              <button class="btn-sm btn-warning" (click)="selectProduct(product)">
+                ✏️ Editar
+              </button>
+              <button class="btn-sm btn-danger" (click)="deleteProduct(product.id)">
+                🗑️ Eliminar
+              </button>
+            </td>
+          </tr>
+          
+          <tr *ngIf="filteredProducts.length === 0">
+            <td colspan="9" class="text-center no-data">
+              No se encontraron productos con los filtros aplicados
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Formulario para Agregar/Editar Producto -->
+  <div class="form-card" *ngIf="isEditing">
+    <h3>{{ selectedProduct ? '✏️ Editar Producto' : '➕ Agregar Nuevo Producto' }}</h3>
+    
+    <form (ngSubmit)="selectedProduct ? updateProduct() : addProduct()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="name">Nombre del Producto *</label>
+          <input 
+            type="text" 
+            id="name"
+            [(ngModel)]="(selectedProduct || newProduct).name"
+            name="name"
+            class="form-control"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="category">Categoría *</label>
+          <select 
+            id="category"
+            [(ngModel)]="(selectedProduct || newProduct).category"
+            name="category"
+            class="form-control"
+            required
+          >
+            <option value="">Seleccionar categoría</option>
+            <option *ngFor="let category of getCategories()" [value]="category">
+              {{ category }}
+            </option>
+            <option value="Nueva">+ Nueva categoría</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="price">Precio (S/) *</label>
+          <input 
+            type="number" 
+            id="price"
+            [(ngModel)]="(selectedProduct || newProduct).price"
+            name="price"
+            class="form-control"
+            min="0"
+            step="0.01"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="stock">Stock Actual *</label>
+          <input 
+            type="number" 
+            id="stock"
+            [(ngModel)]="(selectedProduct || newProduct).stock"
+            name="stock"
+            class="form-control"
+            min="0"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="minStock">Stock Mínimo *</label>
+          <input 
+            type="number" 
+            id="minStock"
+            [(ngModel)]="(selectedProduct || newProduct).minStock"
+            name="minStock"
+            class="form-control"
+            min="1"
+            required
+          >
+          <small class="form-text text-muted">
+            Se enviará alerta cuando el stock llegue a este nivel
+          </small>
+        </div>
+        
+        <div class="form-group full-width">
+          <label for="description">Descripción</label>
+          <textarea 
+            id="description"
+            [(ngModel)]="(selectedProduct || newProduct).description"
+            name="description"
+            class="form-control"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success">
+          {{ selectedProduct ? '💾 Guardar Cambios' : '➕ Agregar Producto' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetForm()">
+          ❌ Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Información del Patrón Observer -->
+  <div class="pattern-info">
+    <h3>🎯 Patrón Observer Implementado</h3>
+    <div class="pattern-details">
+      <p>
+        <strong>Funcionalidad:</strong> Notificaciones automáticas de stock bajo
+      </p>
+      <p>
+        <strong>Implementación:</strong> 
+        Cuando el stock de un producto cae por debajo del mínimo configurado,
+        el sistema notifica automáticamente a los usuarios con roles de 
+        <strong>Gerente</strong> y <strong>Compras</strong>.
+      </p>
+      <p>
+        <strong>Componentes:</strong>
+      </p>
+      <ul>
+        <li><strong>Subject:</strong> InventorySubject (observable)</li>
+        <li><strong>Observer:</strong> LowStockNotificationService</li>
+        <li><strong>Evento:</strong> updateStock() → notify() → update()</li>
+      </ul>
+    </div>
+  </div>
+</div>
