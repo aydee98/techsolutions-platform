@@ -1,4 +1,5 @@
-Plataforma integral de gestión de ventas, inventario y reportes financieros para PyMEs peruanas, implementando patrones de diseño de software.
+Plataforma integral de gestión de ventas, inventario y reportes financieros para PyMEs, implementando patrones de diseño de software.
+
 ## 📋 Características Principales
 ### 🏗️ Patrones de Diseño Implementados
 - Adapte: Integración múltiples pasarelas de pago (PayPal, Yape, Plin)
@@ -23,7 +24,7 @@ Plataforma integral de gestión de ventas, inventario y reportes financieros par
 - Angular CLI 19.0.0
 - npm 9.0.0 o superior
   
-### Paso 1: Clonar el Repositorio
+###  Clonar el Repositorio
   git clone https://github.com/aydee98/techsolutions-platform.git
   
 
