@@ -9,15 +9,15 @@ Plataforma integral de gestión de ventas, inventario y reportes financieros par
 - Iterator: Navegación eficiente de catálogos grandes
 
   ### 💼 Módulos del Sistema
-- **🔐 Autenticación y Control de Acceso**
-- **📦 Gestión de Inventario** (Observer Pattern)
-- **🛒 Gestión de Pedidos** (Command + Memento Patterns)
-- **💳 Procesamiento de Pagos** (Adapter Pattern)
-- **📊 Reportes Financieros** (Proxy Pattern)
-- **🏷️ Catálogo de Productos** (Iterator Pattern)
-- **⚙️ Configuración del Sistema** (Strategy Pattern)
+- 🔐 Autenticación y Control de Acceso
+- 📦 Gestión de Inventario (Observer Pattern)
+- 🛒 Gestión de Pedidos (Command + Memento Patterns)
+- 💳 Procesamiento de Pagos (Adapter Pattern)
+- 📊 Reportes Financieros (Proxy Pattern)
+- 🏷️ Catálogo de Productos (Iterator Pattern)
+- ⚙️ Configuración del Sistema (Strategy Pattern)
 
-  ## 🚀 Instalación y Configuración
+  ###🚀 Instalación y Configuración
   ### Prerrequisitos
 - Node.js 18.17 o superior
 - Angular CLI 19.0.0
@@ -27,9 +27,9 @@ Plataforma integral de gestión de ventas, inventario y reportes financieros par
   git clone https://github.com/aydee98/techsolutions-platform.git
   cd techsolutions-platform
 
-Instalar Dependencias
-npm install
-Ejecutar en Modo Desarrollo
-ng serve
+ ###Instalar Dependencias
+ ###npm install
+ ###Ejecutar en Modo Desarrollo
+ ###ng serve
   
 
