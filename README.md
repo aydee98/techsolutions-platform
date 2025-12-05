@@ -1,7 +1,7 @@
 Plataforma integral de gestión de ventas, inventario y reportes financieros para PyMEs, implementando patrones de diseño de software.
 
-## 📋 Características Principales
-### 🏗️ Patrones de Diseño Implementados
+ 📋 Características Principales
+ 🏗️ Patrones de Diseño Implementados
 - Adapte: Integración múltiples pasarelas de pago (PayPal, Yape, Plin)
 - Proxy: Control de acceso a reportes financieros
 - Observer: Notificaciones automáticas de stock bajo
@@ -9,7 +9,7 @@ Plataforma integral de gestión de ventas, inventario y reportes financieros par
 - Strategy: Estrategias flexibles de precios
 - Iterator: Navegación eficiente de catálogos grandes
 
-### 💼 Módulos del Sistema
+ 💼 Módulos del Sistema
 - 🔐 Autenticación y Control de Acceso
 - 📦 Gestión de Inventario (Observer Pattern)
 - 🛒 Gestión de Pedidos (Command + Memento Patterns)
@@ -18,14 +18,22 @@ Plataforma integral de gestión de ventas, inventario y reportes financieros par
 - 🏷️ Catálogo de Productos (Iterator Pattern)
 - ⚙️ Configuración del Sistema (Strategy Pattern)
 
-###🚀 Instalación y Configuración
-  ### Prerrequisitos
+🚀 Instalación 
+  
 - Node.js 18.17 o superior
 - Angular CLI 19.0.0
 - npm 9.0.0 o superior
   
-###  Clonar el Repositorio
-  git clone https://github.com/aydee98/techsolutions-platform.git
+Clonar el Repositorio
+git clone https://github.com/aydee98/techsolutions-platform.git
+  
+Navegar al directorio cd techsolutions-platform
+
+Instalar dependencias npm install
+
+Ejecutar en modo desarrollo ng serve
+
+Abrir en el navegador http://localhost:4200
   
 
  
